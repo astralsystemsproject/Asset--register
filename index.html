@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF0F3; --surface:#fff; --ink:#18232E; --muted:#5F6E7B; --line:#D5DBE1; --line-soft:#E6EAEE;
+  --brand:#0E5A78; --brand-dark:#0A4560; --brand-tint:#E3F0F5;
+  --over:#C23B2E; --over-tint:#FBE9E7;
+  --soon:#E0A100; --soon-ink:#7A4E00; --soon-tint:#FFF3D6;
+  --ok:#2C7A57; --ok-tint:#E4F3EB;
+  --none:#8593A0; --none-tint:#EDF0F3;
+  --radius:10px;
+}
+*{box-sizing:border-box}
+html{font-family:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;color:var(--ink);background:var(--bg);-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;font-variant-numeric:tabular-nums}
+h1,h2,h3,p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+[hidden]{display:none!important}
+.muted{color:var(--muted)}
+
+/* buttons */
+.btn{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:500;line-height:1.2}
+.btn:hover{border-color:#B7C0C9;background:#F8FAFB}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dark)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--ink);background:rgba(0,0,0,.04)}
+.btn.danger{color:var(--over);border-color:#E7C3BF}
+.btn.danger:hover{background:var(--over-tint)}
+.btn:disabled{opacity:.55;cursor:default}
+
+/* demo bar */
+.demo{background:#22303C;color:#fff;padding:8px 20px;font-size:13px;text-align:center}
+
+/* login */
+.login{min-height:100vh;display:grid;place-items:center;padding:20px}
+.login form{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:32px;width:min(400px,100%);display:grid;gap:14px}
+.login h1{font-size:26px;font-weight:650;letter-spacing:-.01em}
+.login .err{color:var(--over);font-size:13.5px;min-height:1.2em}
+
+/* layout */
+.wrap{max-width:1280px;margin:0 auto;padding:24px 20px 60px}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.top h1{font-size:30px;font-weight:650;letter-spacing:-.015em;line-height:1.1}
+.top .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#who{font-size:13px;color:var(--muted);margin-right:4px}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+
+/* status panel */
+.status{padding:20px 22px 18px;margin-bottom:16px}
+.status-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.status-head h2{font-size:15px;font-weight:600}
+.window{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.window select{border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--surface)}
+.bar{display:flex;gap:3px;height:16px;border-radius:8px;overflow:hidden;background:var(--none-tint)}
+.bar span{display:block;min-width:6px;transition:flex-grow .35s ease}
+.bar .s-over{background:var(--over)} .bar .s-soon{background:var(--soon)} .bar .s-ok{background:var(--ok)} .bar .s-none{background:var(--none)}
+.legend{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.legend button{all:unset;cursor:pointer;padding:8px 10px;border-radius:8px;border:1px solid transparent;display:grid;gap:2px}
+.legend button:hover{background:var(--bg)}
+.legend button[aria-pressed="true"]{border-color:var(--line);background:var(--bg)}
+.legend button:focus-visible{outline:2px solid var(--brand)}
+.legend .n{font-size:28px;font-weight:650;line-height:1.05;letter-spacing:-.01em}
+.legend .l{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:7px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.stats{display:flex;gap:28px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft);font-size:13.5px;color:var(--muted)}
+.stats b{color:var(--ink);font-weight:600;font-size:15px;margin-right:4px}
+
+/* filters */
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.filters input,.filters select{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 11px;min-width:0}
+.filters input[type=search]{flex:1 1 240px;max-width:380px}
+.count{margin-left:auto;font-size:13px;color:var(--muted)}
+
+/* table */
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:1000px}
+th{position:sticky;top:0;background:#F6F8FA;text-align:left;font-weight:600;font-size:13px;color:var(--muted);border-bottom:1px solid var(--line);padding:0;white-space:nowrap}
+th button{all:unset;cursor:pointer;display:block;padding:11px 14px;width:100%;box-sizing:border-box}
+th button:hover{color:var(--ink)}
+th button:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
+th[aria-sort="ascending"] button::after{content:" ↑"}
+th[aria-sort="descending"] button::after{content:" ↓"}
+td{padding:11px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:#F8FAFB}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
+td.tag{font-weight:650;white-space:nowrap;box-shadow:inset 4px 0 0 var(--c,transparent);padding-left:16px}
+.nm{font-weight:500}
+.sub{font-size:12.5px;color:var(--muted);margin-top:1px}
+.due .d{white-space:nowrap}
+.rel{font-size:12.5px;margin-top:1px}
+.rel.over{color:var(--over);font-weight:600} .rel.soon{color:var(--soon-ink);font-weight:600} .rel.ok{color:var(--muted)}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;white-space:nowrap}
+.pill.over{background:var(--over-tint);color:#8F2419} .pill.soon{background:var(--soon-tint);color:var(--soon-ink)}
+.pill.ok{background:var(--ok-tint);color:#1D5A3E} .pill.none{background:var(--none-tint);color:#46525E} .pill.ret{background:#E8E4EE;color:#4B3F5E}
+.pill.repair{background:#FDE8D8;color:#8A3F0E}
+.empty{padding:48px 20px;text-align:center;color:var(--muted)}
+.empty h3{color:var(--ink);font-size:16px;margin-bottom:4px}
+.num{text-align:right}
+
+/* drawer */
+.backdrop{position:fixed;inset:0;background:rgba(16,28,38,.42);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--surface);z-index:21;display:flex;flex-direction:column;box-shadow:-12px 0 40px rgba(16,28,38,.18);animation:slide .22s ease}
+@keyframes slide{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
+.drawer header{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.drawer header h2{font-size:18px;font-weight:650}
+.drawer form{display:flex;flex-direction:column;min-height:0;flex:1}
+.drawer .body{overflow-y:auto;padding:6px 22px 18px;flex:1}
+.drawer footer{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:space-between;background:#F6F8FA}
+.drawer footer .right{display:flex;gap:8px}
+fieldset{border:none;padding:0;margin:18px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+legend{font-weight:650;font-size:13.5px;padding:0;margin-bottom:8px;float:left;width:100%}
+legend+*{clear:both}
+.f{display:grid;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+.f.wide{grid-column:1/-1}
+.f input,.f select,.f textarea{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;color:var(--ink);width:100%;min-width:0}
+.f textarea{min-height:70px;resize:vertical}
+.f input:disabled{background:var(--bg);color:#8A97A3}
+.check{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);grid-column:1/-1}
+.check input{width:auto}
+.preview{grid-column:1/-1;background:var(--brand-tint);border-radius:8px;padding:10px 12px;font-size:13.5px;color:#0A3E54;display:grid;gap:2px}
+.quick{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.formerr{color:var(--over);font-size:13px;min-height:1.1em;margin-top:10px}
+
+/* toast */
+#toasts{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:grid;gap:8px;z-index:40;width:min(440px,92vw)}
+.toast{background:#22303C;color:#fff;padding:11px 16px;border-radius:9px;font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.2)}
+.toast.error{background:#8F2419}
+
+@media (max-width:720px){
+  .legend{grid-template-columns:repeat(2,1fr)}
+  fieldset{grid-template-columns:1fr}
+  .top h1{font-size:26px}
+  .count{margin-left:0;width:100%}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="demoBar" class="demo" hidden>Demo mode: nothing is saved. Add your Firebase config near the top of this file to go live.</div>
+
+<!-- Sign in -->
+<div id="login" class="login" hidden>
+  <form id="loginForm" novalidate>
+    <div>
+      <h1>Asset register</h1>
+      <p class="muted" style="margin-top:4px">Sign in with your company account.</p>
+    </div>
+    <label class="f">Email
+      <input type="email" id="loginEmail" autocomplete="username" required>
+    </label>
+    <label class="f">Password
+      <input type="password" id="loginPass" autocomplete="current-password" required>
+    </label>
+    <p class="err" id="loginErr" role="alert"></p>
+    <button class="btn primary" type="submit">Sign in</button>
+    <button class="btn ghost" type="button" id="forgot">Forgot password?</button>
+  </form>
+</div>
+
+<!-- App -->
+<div id="app" hidden>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Asset register</h1>
+      <p class="muted" style="margin-top:4px">Every asset, with service and calibration dates in one place.</p>
+    </div>
+    <div class="actions">
+      <span id="who"></span>
+      <button class="btn" id="btnImport" type="button">Import CSV</button>
+      <input type="file" id="file" accept=".csv,text/csv" hidden>
+      <button class="btn" id="btnExport" type="button">Export CSV</button>
+      <button class="btn primary" id="btnAdd" type="button">Add asset</button>
+      <button class="btn ghost" id="btnOut" type="button">Sign out</button>
+    </div>
+  </header>
+
+  <section class="panel status" aria-labelledby="statusTitle">
+    <div class="status-head">
+      <h2 id="statusTitle">Service and calibration status</h2>
+      <label class="window">Due soon means within
+        <select id="window">
+          <option value="14">14 days</option>
+          <option value="30" selected>30 days</option>
+          <option value="60">60 days</option>
+          <option value="90">90 days</option>
+        </select>
+      </label>
+    </div>
+    <div class="bar" id="bar" role="img" aria-label="Status breakdown"></div>
+    <div class="legend" id="legend"></div>
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <div class="filters">
+    <input type="search" id="q" placeholder="Search asset no., name, serial, owner…" aria-label="Search assets">
+    <select id="fCat" aria-label="Filter by category"></select>
+    <select id="fSite" aria-label="Filter by site"></select>
+    <select id="fView" aria-label="Filter by status">
+      <option value="active">All active</option>
+      <option value="overdue">Overdue</option>
+      <option value="soon">Due soon</option>
+      <option value="ok">On schedule</option>
+      <option value="none">No schedule</option>
+      <option value="retired">Retired</option>
+    </select>
+    <span class="count" id="count" aria-live="polite"></span>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr id="thead">
+          <th data-k="assetNo"><button type="button">Asset no.</button></th>
+          <th data-k="name"><button type="button">Name</button></th>
+          <th data-k="site"><button type="button">Site and location</button></th>
+          <th data-k="owner"><button type="button">Owner</button></th>
+          <th data-k="status"><button type="button">Status</button></th>
+          <th data-k="service"><button type="button">Next service</button></th>
+          <th data-k="calibration"><button type="button">Next calibration</button></th>
+          <th data-k="value" class="num"><button type="button" style="text-align:right">Value</button></th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty" hidden></div>
+  </div>
+</div>
+</div>
+
+<!-- Drawer -->
+<div id="backdrop" class="backdrop" hidden></div>
+<aside id="drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle" hidden>
+  <header>
+    <h2 id="dTitle">Add asset</h2>
+    <button class="btn ghost" type="button" id="dClose" aria-label="Close">Close</button>
+  </header>
+  <form id="form" novalidate>
+    <div class="body">
+      <fieldset>
+        <legend>Identity</legend>
+        <label class="f">Asset number *<input name="assetNo" required></label>
+        <label class="f">Name *<input name="name" required></label>
+        <label class="f">Category<input name="category" list="dlCat" placeholder="e.g. Fire safety"></label>
+        <label class="f">Status
+          <select name="status">
+            <option>Active</option><option>In repair</option><option>Out of service</option><option>Retired</option>
+          </select>
+        </label>
+        <label class="f">Manufacturer<input name="manufacturer"></label>
+        <label class="f">Model<input name="model"></label>
+        <label class="f wide">Serial number<input name="serial"></label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Location and ownership</legend>
+        <label class="f">Site<input name="site" list="dlSite"></label>
+        <label class="f">Room or area<input name="location"></label>
+        <label class="f wide">Owner or department<input name="owner"></label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Finance</legend>
+        <label class="f">Purchase date<input type="date" name="purchaseDate"></label>
+        <label class="f">Item value (£)<input type="number" name="value" min="0" step="0.01" inputmode="decimal"></label>
+        <label class="f">Supplier<input name="supplier"></label>
+        <label class="f">Warranty expires<input type="date" name="warrantyExpiry"></label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Service</legend>
+        <label class="f">Last serviced<input type="date" name="lastService"></label>
+        <label class="f">Service every (months)<input type="number" name="serviceInterval" min="1" step="1" inputmode="numeric"></label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Calibration</legend>
+        <label class="check"><input type="checkbox" name="calibrationRequired"> This asset needs calibration</label>
+        <label class="f">Last calibrated<input type="date" name="lastCalibration"></label>
+        <label class="f">Calibrate every (months)<input type="number" name="calibInterval" min="1" step="1" inputmode="numeric"></label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Next due dates</legend>
+        <div class="preview" id="preview"></div>
+        <div class="quick" id="quick" hidden>
+          <button class="btn" type="button" id="logService">Log service today</button>
+          <button class="btn" type="button" id="logCal">Log calibration today</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Documents and notes</legend>
+        <label class="f wide">Certificate or document link<input type="url" name="certificateUrl" placeholder="https://"></label>
+        <label class="f wide">Notes<textarea name="notes"></textarea></label>
+      </fieldset>
+      <p class="formerr" id="formErr" role="alert"></p>
+    </div>
+    <footer>
+      <button class="btn danger" type="button" id="btnDelete" hidden>Delete</button>
+      <span class="right" style="margin-left:auto">
+        <button class="btn" type="button" id="btnCancel">Cancel</button>
+        <button class="btn primary" type="submit" id="btnSave">Save asset</button>
+      </span>
+    </footer>
+  </form>
+</aside>
+
+<datalist id="dlCat"></datalist>
+<datalist id="dlSite"></datalist>
+<div id="toasts" aria-live="polite"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, onSnapshot, addDoc, setDoc, deleteDoc, doc, serverTimestamp, writeBatch }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ============================================================
+   1. PASTE YOUR FIREBASE CONFIG HERE
+   Firebase console > Project settings > Your apps > Web app
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDRAePpkNj9xxQIbmROysVBKlElivGwmXw",
+  authDomain: "asset-register-d0ba3.firebaseapp.com",
+  projectId: "asset-register-d0ba3",
+  storageBucket: "asset-register-d0ba3.firebasestorage.app",
+  messagingSenderId: "1084455518069",
+  appId: "1:1084455518069:web:dcc1989950f1a3c0a69d3c"
+};
+const COLLECTION = "assets";
+const DEMO = firebaseConfig.apiKey.startsWith("YOUR_");
+
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2, "0");
+const toISO = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseISO = s => { if (!s) return null; const [y,m,d] = s.split("-").map(Number); return y ? new Date(y, m-1, d) : null; };
+const startOfToday = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); };
+const daysFromToday = d => Math.round((d - startOfToday()) / 86400000);
+const addMonths = (iso, n) => {
+  const d = parseISO(iso); n = Number(n);
+  if (!d || !n) return null;
+  const r = new Date(d.getFullYear(), d.getMonth() + n, 1);
+  r.setDate(Math.min(d.getDate(), new Date(r.getFullYear(), r.getMonth() + 1, 0).getDate()));
+  return r;
+};
+const fmtDate = d => d ? d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "";
+const money = new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 });
+
+/* ---------- fields (also used for CSV) ---------- */
+const FIELDS = [
+  ["assetNo","Asset number"],["name","Name"],["category","Category"],["status","Status"],
+  ["manufacturer","Manufacturer"],["model","Model"],["serial","Serial number"],
+  ["site","Site"],["location","Room or area"],["owner","Owner or department"],
+  ["purchaseDate","Purchase date"],["value","Item value"],["supplier","Supplier"],["warrantyExpiry","Warranty expires"],
+  ["lastService","Last serviced"],["serviceInterval","Service every (months)"],
+  ["calibrationRequired","Needs calibration"],["lastCalibration","Last calibrated"],["calibInterval","Calibrate every (months)"],
+  ["certificateUrl","Certificate link"],["notes","Notes"]
+];
+const DATE_KEYS = ["purchaseDate","warrantyExpiry","lastService","lastCalibration"];
+const NUM_KEYS = ["value","serviceInterval","calibInterval"];
+
+/* ---------- state ---------- */
+let assets = [];
+let editingId = null;
+let soonWindow = 30;
+let filters = { q: "", category: "", site: "", view: "active" };
+let sort = { key: "service", dir: 1 };
+let lastFocus = null;
+let currentUser = null;
+
+/* ---------- status logic ---------- */
+function compute(a) {
+  const ns = a.lastService && a.serviceInterval ? addMonths(a.lastService, a.serviceInterval) : null;
+  const nc = a.calibrationRequired && a.lastCalibration && a.calibInterval ? addMonths(a.lastCalibration, a.calibInterval) : null;
+  const dS = ns ? daysFromToday(ns) : null;
+  const dC = nc ? daysFromToday(nc) : null;
+  const ds = [dS, dC].filter(x => x !== null);
+  const min = ds.length ? Math.min(...ds) : null;
+  let state = "ok";
+  if (a.status === "Retired") state = "retired";
+  else if (min === null) state = "none";
+  else if (min < 0) state = "overdue";
+  else if (min <= soonWindow) state = "soon";
+  return { ns, nc, dS, dC, min, state };
+}
+
+/* ---------- data layer: Firestore, or in-memory demo ---------- */
+let db, auth, unsub = null;
+const listeners = new Set();
+let demoData = [];
+
+function demoSeed() {
+  const off = n => { const d = startOfToday(); d.setDate(d.getDate() + n); return toISO(d); };
+  const mk = (i, o) => ({ id: "demo" + i, status: "Active", calibrationRequired: false, ...o });
+  return [
+    mk(1,{assetNo:"FS-001",name:"Fire extinguisher, CO2",category:"Fire safety",site:"Filton",location:"Main corridor",owner:"Facilities",value:85,lastService:off(-400),serviceInterval:12}),
+    mk(2,{assetNo:"EL-014",name:"Digital multimeter",category:"Test equipment",manufacturer:"Fluke",model:"87V",site:"Filton",location:"Lab 2",owner:"Engineering",value:420,lastService:off(-100),serviceInterval:12,calibrationRequired:true,lastCalibration:off(-350),calibInterval:12}),
+    mk(3,{assetNo:"HV-203",name:"Air handling unit",category:"HVAC",site:"Filton",location:"Roof plant",owner:"Facilities",value:18500,lastService:off(-160),serviceInterval:6}),
+    mk(4,{assetNo:"TE-031",name:"Torque wrench, 20–100 Nm",category:"Test equipment",manufacturer:"Norbar",site:"Filton",location:"Workshop",owner:"Production",value:640,lastService:off(-300),serviceInterval:12,calibrationRequired:true,lastCalibration:off(-170),calibInterval:6}),
+    mk(5,{assetNo:"IT-118",name:"Network switch, 48 port",category:"IT",site:"Bristol",location:"Comms room",owner:"IT",value:2900,warrantyExpiry:off(60)}),
+    mk(6,{assetNo:"LF-007",name:"Forklift, electric",category:"Vehicles",site:"Bristol",location:"Warehouse",owner:"Logistics",value:14200,lastService:off(-20),serviceInterval:3}),
+    mk(7,{assetNo:"PP-022",name:"Pressure gauge",category:"Test equipment",site:"Filton",location:"Lab 1",owner:"Engineering",value:210,calibrationRequired:true,lastCalibration:off(-30),calibInterval:12}),
+    mk(8,{assetNo:"OF-090",name:"Old plotter",category:"IT",site:"Bristol",location:"Store",owner:"Facilities",value:0,status:"Retired"})
+  ];
+}
+
+const store = {
+  subscribe(cb) {
+    if (DEMO) { listeners.add(cb); cb(demoData); return () => listeners.delete(cb); }
+    return onSnapshot(collection(db, COLLECTION),
+      snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+      err => toast(errMsg(err), "error"));
+  },
+  async save(id, data) {
+    if (DEMO) {
+      if (id) demoData = demoData.map(a => a.id === id ? { ...a, ...data } : a);
+      else demoData = [...demoData, { id: "demo" + Date.now(), ...data }];
+      listeners.forEach(l => l(demoData)); return;
+    }
+    const payload = { ...data, updatedAt: serverTimestamp(), updatedBy: auth.currentUser?.email || "" };
+    if (id) await setDoc(doc(db, COLLECTION, id), payload, { merge: true });
+    else await addDoc(collection(db, COLLECTION), payload);
+  },
+  async remove(id) {
+    if (DEMO) { demoData = demoData.filter(a => a.id !== id); listeners.forEach(l => l(demoData)); return; }
+    await deleteDoc(doc(db, COLLECTION, id));
+  },
+  async bulkAdd(list) {
+    if (DEMO) { demoData = [...demoData, ...list.map((x, i) => ({ id: "demo" + Date.now() + i, ...x }))]; listeners.forEach(l => l(demoData)); return; }
+    for (let i = 0; i < list.length; i += 400) {
+      const batch = writeBatch(db);
+      list.slice(i, i + 400).forEach(x => batch.set(doc(collection(db, COLLECTION)),
+        { ...x, updatedAt: serverTimestamp(), updatedBy: auth.currentUser?.email || "" }));
+      await batch.commit();
+    }
+  }
+};
+
+function errMsg(err) {
+  const c = err?.code || "";
+  if (c.includes("permission-denied")) return "You have view-only access. Ask an admin to add you as an editor.";
+  if (c.includes("unavailable") || c.includes("network")) return "Can't reach the server. Check your connection and try again.";
+  return err?.message || "Something went wrong. Try again.";
+}
+
+function toast(msg, kind = "") {
+  const t = document.createElement("div");
+  t.className = "toast " + kind; t.textContent = msg;
+  $("#toasts").appendChild(t);
+  setTimeout(() => t.remove(), kind === "error" ? 6000 : 3200);
+}
+
+/* ---------- rendering ---------- */
+const STATE = {
+  overdue: { label: "Overdue", cls: "over", color: "var(--over)" },
+  soon:    { label: "Due soon", cls: "soon", color: "var(--soon)" },
+  ok:      { label: "On schedule", cls: "ok", color: "var(--ok)" },
+  none:    { label: "No schedule", cls: "none", color: "var(--none)" },
+  retired: { label: "Retired", cls: "ret", color: "transparent" }
+};
+
+function uniq(key) { return [...new Set(assets.map(a => a[key]).filter(Boolean))].sort((a, b) => a.localeCompare(b)); }
+
+function renderFilters() {
+  const fill = (sel, label, key, cur) => {
+    const vals = uniq(key);
+    sel.innerHTML = `<option value="">${label}</option>` + vals.map(v => `<option${v === cur ? " selected" : ""}>${esc(v)}</option>`).join("");
+  };
+  fill($("#fCat"), "All categories", "category", filters.category);
+  fill($("#fSite"), "All sites", "site", filters.site);
+  $("#dlCat").innerHTML = uniq("category").map(v => `<option value="${esc(v)}">`).join("");
+  $("#dlSite").innerHTML = uniq("site").map(v => `<option value="${esc(v)}">`).join("");
+}
+
+function renderStatus() {
+  const active = assets.map(a => ({ a, c: compute(a) })).filter(x => x.c.state !== "retired");
+  const counts = { overdue: 0, soon: 0, ok: 0, none: 0 };
+  active.forEach(x => counts[x.c.state]++);
+  const total = active.length;
+
+  $("#bar").innerHTML = ["overdue","soon","ok","none"].filter(k => counts[k])
+    .map(k => `<span class="s-${STATE[k].cls === "over" ? "over" : STATE[k].cls}" style="flex:${counts[k]}"></span>`).join("");
+  $("#bar").setAttribute("aria-label",
+    total ? `${counts.overdue} overdue, ${counts.soon} due soon, ${counts.ok} on schedule, ${counts.none} without a schedule` : "No assets yet");
+
+  $("#legend").innerHTML = ["overdue","soon","ok","none"].map(k => `
+    <button type="button" data-view="${k}" aria-pressed="${filters.view === k}">
+      <span class="n">${counts[k]}</span>
+      <span class="l"><i class="dot" style="background:${STATE[k].color}"></i>${STATE[k].label}</span>
+    </button>`).join("");
+
+  const value = active.reduce((s, x) => s + (Number(x.a.value) || 0), 0);
+  const warranty = active.filter(x => { const d = parseISO(x.a.warrantyExpiry); if (!d) return false; const n = daysFromToday(d); return n >= 0 && n <= 90; }).length;
+  $("#stats").innerHTML = `
+    <span><b>${total}</b>active assets</span>
+    <span><b>${money.format(value)}</b>total value</span>
+    <span><b>${warranty}</b>warranties ending within 90 days</span>`;
+}
+
+function dueCell(date, days, kind, a) {
+  if (kind === "cal" && !a.calibrationRequired) return `<span class="muted">Not required</span>`;
+  if (!date) return `<span class="muted">Not set</span>`;
+  let rel, cls;
+  if (days < 0) { rel = `${-days} day${days === -1 ? "" : "s"} overdue`; cls = "over"; }
+  else if (days === 0) { rel = "Due today"; cls = "soon"; }
+  else if (days <= soonWindow) { rel = `In ${days} day${days === 1 ? "" : "s"}`; cls = "soon"; }
+  else { rel = days >= 90 ? `In ${Math.round(days / 30.4)} months` : `In ${days} days`; cls = "ok"; }
+  return `<div class="d">${fmtDate(date)}</div><div class="rel ${cls}">${rel}</div>`;
+}
+
+function visibleRows() {
+  const q = filters.q.trim().toLowerCase();
+  let rows = assets.map(a => ({ a, c: compute(a) })).filter(({ a, c }) => {
+    if (filters.view === "active" ? c.state === "retired" : c.state !== filters.view) return false;
+    if (filters.category && a.category !== filters.category) return false;
+    if (filters.site && a.site !== filters.site) return false;
+    if (q) {
+      const hay = [a.assetNo,a.name,a.category,a.serial,a.manufacturer,a.model,a.site,a.location,a.owner,a.supplier].join(" ").toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  const val = ({ a, c }) => ({
+    assetNo: a.assetNo, name: a.name, site: `${a.site || ""} ${a.location || ""}`, owner: a.owner, status: a.status,
+    service: c.dS, calibration: c.dC, value: Number(a.value) || 0
+  })[sort.key];
+  rows.sort((x, y) => {
+    const a = val(x), b = val(y);
+    if (a === null || a === undefined || a === "") return b === null || b === undefined || b === "" ? 0 : 1;
+    if (b === null || b === undefined || b === "") return -1;
+    return (typeof a === "number" ? a - b : String(a).localeCompare(String(b), "en-GB", { numeric: true })) * sort.dir;
+  });
+  return rows;
+}
+
+function renderTable() {
+  const rows = visibleRows();
+  $("#rows").innerHTML = rows.map(({ a, c }) => {
+    const st = STATE[c.state];
+    const statusPill = a.status === "In repair" || a.status === "Out of service"
+      ? `<span class="pill repair">${esc(a.status)}</span>`
+      : `<span class="pill ${st.cls}">${a.status === "Retired" ? "Retired" : st.label}</span>`;
+    return `<tr data-id="${esc(a.id)}" tabindex="0">
+      <td class="tag" style="--c:${st.color}">${esc(a.assetNo)}</td>
+      <td><div class="nm">${esc(a.name)}</div><div class="sub">${esc(a.category)}</div></td>
+      <td><div>${esc(a.site)}</div><div class="sub">${esc(a.location)}</div></td>
+      <td>${esc(a.owner)}</td>
+      <td>${statusPill}</td>
+      <td class="due">${dueCell(c.ns, c.dS, "svc", a)}</td>
+      <td class="due">${dueCell(c.nc, c.dC, "cal", a)}</td>
+      <td class="num">${a.value != null && a.value !== "" ? money.format(a.value) : ""}</td>
+    </tr>`;
+  }).join("");
+
+  const empty = $("#empty");
+  if (!rows.length) {
+    empty.hidden = false;
+    empty.innerHTML = assets.length
+      ? `<h3>No assets match these filters</h3><p>Clear the search or change the status filter.</p>`
+      : `<h3>No assets yet</h3><p>Add your first asset, or import a CSV to load them in bulk.</p>`;
+  } else empty.hidden = true;
+
+  $("#count").textContent = `${rows.length} of ${assets.length} shown`;
+  document.querySelectorAll("#thead th").forEach(th => {
+    th.setAttribute("aria-sort", th.dataset.k === sort.key ? (sort.dir === 1 ? "ascending" : "descending") : "none");
+  });
+  $("#fView").value = filters.view;
+}
+
+function renderAll() { renderFilters(); renderStatus(); renderTable(); }
+
+/* ---------- events: table & filters ---------- */
+$("#thead").addEventListener("click", e => {
+  const th = e.target.closest("th"); if (!th) return;
+  sort = { key: th.dataset.k, dir: sort.key === th.dataset.k ? -sort.dir : 1 };
+  renderTable();
+});
+$("#rows").addEventListener("click", e => { const tr = e.target.closest("tr"); if (tr) openDrawer(tr.dataset.id); });
+$("#rows").addEventListener("keydown", e => { if (e.key === "Enter") { const tr = e.target.closest("tr"); if (tr) openDrawer(tr.dataset.id); } });
+$("#q").addEventListener("input", e => { filters.q = e.target.value; renderTable(); });
+$("#fCat").addEventListener("change", e => { filters.category = e.target.value; renderTable(); });
+$("#fSite").addEventListener("change", e => { filters.site = e.target.value; renderTable(); });
+$("#fView").addEventListener("change", e => { filters.view = e.target.value; renderStatus(); renderTable(); });
+$("#legend").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  filters.view = filters.view === b.dataset.view ? "active" : b.dataset.view;
+  renderStatus(); renderTable();
+});
+$("#window").addEventListener("change", e => {
+  soonWindow = Number(e.target.value);
+  try { localStorage.setItem("assetSoonWindow", soonWindow); } catch {}
+  renderAll();
+});
+try { const w = localStorage.getItem("assetSoonWindow"); if (w) { soonWindow = Number(w); $("#window").value = w; } } catch {}
+
+/* ---------- drawer / form ---------- */
+const form = $("#form");
+function setForm(a) {
+  FIELDS.forEach(([k]) => {
+    const el = form.elements[k]; if (!el) return;
+    if (el.type === "checkbox") el.checked = !!a[k]; else el.value = a[k] ?? "";
+  });
+  if (!a.status) form.elements.status.value = "Active";
+  syncCal(); updatePreview();
+}
+function readForm() {
+  const d = {};
+  FIELDS.forEach(([k]) => {
+    const el = form.elements[k];
+    if (el.type === "checkbox") d[k] = el.checked;
+    else if (NUM_KEYS.includes(k)) d[k] = el.value === "" ? null : Number(el.value);
+    else d[k] = el.value.trim();
+  });
+  return d;
+}
+function syncCal() {
+  const on = form.elements.calibrationRequired.checked;
+  form.elements.lastCalibration.disabled = !on;
+  form.elements.calibInterval.disabled = !on;
+}
+function updatePreview() {
+  const c = compute(readForm());
+  const line = (label, d, days) => d
+    ? `<div>${label}: <b>${fmtDate(d)}</b> (${days < 0 ? -days + " days overdue" : days === 0 ? "today" : "in " + days + " days"})</div>`
+    : `<div>${label}: set a last date and an interval to calculate this</div>`;
+  const calOn = form.elements.calibrationRequired.checked;
+  $("#preview").innerHTML = line("Next service", c.ns, c.dS) + (calOn ? line("Next calibration", c.nc, c.dC) : `<div>Calibration: not required</div>`);
+}
+form.addEventListener("input", () => { syncCal(); updatePreview(); });
+
+function openDrawer(id) {
+  lastFocus = document.activeElement;
+  editingId = id || null;
+  const a = id ? assets.find(x => x.id === id) : null;
+  $("#dTitle").textContent = a ? `${a.assetNo}: ${a.name}` : "Add asset";
+  $("#btnSave").textContent = a ? "Save changes" : "Save asset";
+  $("#btnDelete").hidden = !a;
+  $("#quick").hidden = !a;
+  $("#formErr").textContent = "";
+  setForm(a || {});
+  $("#backdrop").hidden = false; $("#drawer").hidden = false;
+  document.body.style.overflow = "hidden";
+  form.elements.assetNo.focus();
+}
+function closeDrawer() {
+  $("#drawer").hidden = true; $("#backdrop").hidden = true;
+  document.body.style.overflow = "";
+  editingId = null;
+  if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+}
+$("#btnAdd").addEventListener("click", () => openDrawer(null));
+$("#dClose").addEventListener("click", closeDrawer);
+$("#btnCancel").addEventListener("click", closeDrawer);
+$("#backdrop").addEventListener("click", closeDrawer);
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#drawer").hidden) closeDrawer(); });
+
+$("#logService").addEventListener("click", () => { form.elements.lastService.value = toISO(new Date()); form.requestSubmit(); });
+$("#logCal").addEventListener("click", () => {
+  form.elements.calibrationRequired.checked = true; syncCal();
+  form.elements.lastCalibration.value = toISO(new Date()); form.requestSubmit();
+});
+
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  const d = readForm();
+  const err = $("#formErr");
+  if (!d.assetNo || !d.name) { err.textContent = "Add an asset number and a name."; return; }
+  if (assets.some(a => a.id !== editingId && (a.assetNo || "").toLowerCase() === d.assetNo.toLowerCase())) {
+    err.textContent = `Asset number ${d.assetNo} is already in use.`; return;
+  }
+  if (!d.calibrationRequired) { d.lastCalibration = ""; d.calibInterval = null; }
+  $("#btnSave").disabled = true;
+  try {
+    await store.save(editingId, d);
+    toast(`${d.assetNo} saved`);
+    closeDrawer();
+  } catch (ex) { err.textContent = errMsg(ex); }
+  finally { $("#btnSave").disabled = false; }
+});
+
+$("#btnDelete").addEventListener("click", async () => {
+  const a = assets.find(x => x.id === editingId); if (!a) return;
+  if (!confirm(`Delete ${a.assetNo} (${a.name})? This can't be undone.\n\nIf it's just out of use, set its status to Retired instead.`)) return;
+  try { await store.remove(editingId); toast(`${a.assetNo} deleted`); closeDrawer(); }
+  catch (ex) { $("#formErr").textContent = errMsg(ex); }
+});
+
+/* ---------- CSV ---------- */
+function csvCell(v) { v = v ?? ""; v = String(v); return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; }
+$("#btnExport").addEventListener("click", () => {
+  const head = FIELDS.map(f => csvCell(f[1])).join(",");
+  const body = assets.map(a => FIELDS.map(([k]) => csvCell(k === "calibrationRequired" ? (a[k] ? "Yes" : "No") : a[k])).join(",")).join("\n");
+  const blob = new Blob(["\ufeff" + head + "\n" + body], { type: "text/csv;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob); link.download = `asset-register-${toISO(new Date())}.csv`;
+  link.click(); URL.revokeObjectURL(link.href);
+});
+
+function parseCSV(text) {
+  const rows = []; let row = [], cur = "", q = false;
+  text = text.replace(/^\ufeff/, "");
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i+1] === '"') { cur += '"'; i++; } else q = false; } else cur += c;
+    } else if (c === '"') q = true;
+    else if (c === ",") { row.push(cur); cur = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && text[i+1] === "\n") i++; row.push(cur); rows.push(row); row = []; cur = ""; }
+    else cur += c;
+  }
+  if (cur !== "" || row.length) { row.push(cur); rows.push(row); }
+  return rows.filter(r => r.some(x => x.trim() !== ""));
+}
+function normDate(v) {
+  v = (v || "").trim(); if (!v) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  const m = v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/);
+  if (m) { const y = m[3].length === 2 ? "20" + m[3] : m[3]; return `${y}-${pad(m[2])}-${pad(m[1])}`; }
+  const d = new Date(v); return isNaN(d) ? "" : toISO(d);
+}
+$("#btnImport").addEventListener("click", () => $("#file").click());
+$("#file").addEventListener("change", async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  const rows = parseCSV(await f.text());
+  if (rows.length < 2) return toast("That file has no rows to import.", "error");
+  const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const map = {};
+  rows[0].forEach((h, i) => { const fld = FIELDS.find(([k, l]) => norm(k) === norm(h) || norm(l) === norm(h)); if (fld) map[fld[0]] = i; });
+  if (map.assetNo === undefined || map.name === undefined) return toast("The file needs 'Asset number' and 'Name' columns.", "error");
+  const have = new Set(assets.map(a => (a.assetNo || "").toLowerCase()));
+  const list = []; let skipped = 0;
+  rows.slice(1).forEach(r => {
+    const o = {};
+    FIELDS.forEach(([k]) => {
+      let v = map[k] === undefined ? "" : (r[map[k]] || "").trim();
+      if (DATE_KEYS.includes(k)) v = normDate(v);
+      else if (NUM_KEYS.includes(k)) { v = v.replace(/[£,\s]/g, ""); v = v === "" || isNaN(v) ? null : Number(v); }
+      else if (k === "calibrationRequired") v = /^(y|yes|true|1)$/i.test(v);
+      else if (k === "status") v = ["Active","In repair","Out of service","Retired"].find(s => s.toLowerCase() === v.toLowerCase()) || "Active";
+      o[k] = v;
+    });
+    const key = (o.assetNo || "").toLowerCase();
+    if (!o.assetNo || !o.name || have.has(key)) { skipped++; return; }
+    have.add(key); list.push(o);
+  });
+  if (!list.length) return toast(`Nothing imported. ${skipped} row${skipped === 1 ? "" : "s"} skipped (missing details or already in the register).`, "error");
+  try {
+    await store.bulkAdd(list);
+    toast(`Imported ${list.length} asset${list.length === 1 ? "" : "s"}${skipped ? `, skipped ${skipped}` : ""}.`);
+  } catch (ex) { toast(errMsg(ex), "error"); }
+});
+
+/* ---------- auth & start ---------- */
+function startApp(user) {
+  currentUser = user;
+  $("#login").hidden = true; $("#app").hidden = false;
+  $("#who").textContent = user?.email || "";
+  $("#btnOut").hidden = DEMO;
+  unsub && unsub();
+  unsub = store.subscribe(list => { assets = list; renderAll(); });
+}
+function showLogin() {
+  unsub && unsub(); unsub = null; assets = [];
+  $("#app").hidden = true; $("#login").hidden = false;
+}
+
+if (DEMO) {
+  $("#demoBar").hidden = false;
+  demoData = demoSeed();
+  startApp(null);
+  $("#who").textContent = "Demo";
+} else {
+  const app = initializeApp(firebaseConfig);
+  auth = getAuth(app); db = getFirestore(app);
+  onAuthStateChanged(auth, user => user ? startApp(user) : showLogin());
+
+  $("#loginForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const err = $("#loginErr"); err.textContent = "";
+    try { await signInWithEmailAndPassword(auth, $("#loginEmail").value.trim(), $("#loginPass").value); }
+    catch (ex) {
+      err.textContent = /invalid|wrong|user-not-found|credential/.test(ex.code || "")
+        ? "Email or password is incorrect." : /too-many/.test(ex.code || "")
+        ? "Too many attempts. Wait a few minutes and try again." : errMsg(ex);
+    }
+  });
+  $("#forgot").addEventListener("click", async () => {
+    const email = $("#loginEmail").value.trim(); const err = $("#loginErr");
+    if (!email) { err.textContent = "Enter your email above, then select Forgot password."; return; }
+    try { await sendPasswordResetEmail(auth, email); err.style.color = "var(--ok)"; err.textContent = "Reset link sent. Check your inbox."; }
+    catch (ex) { err.style.color = ""; err.textContent = errMsg(ex); }
+  });
+  $("#btnOut").addEventListener("click", () => signOut(auth));
+}
+</script>
+</body>
+</html>
